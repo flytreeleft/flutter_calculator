@@ -89,13 +89,13 @@ class _MathFormulaViewState extends State<MathFormulaView> {
 
     // The location of the char which is behind the cursor
     int charOffset = this._textController.value.selection.baseOffset;
-    formula.moveCursorToCharOffset(charOffset);
+    int cursor = _getFormulaCursorByCharOffset(formula.symbols, charOffset);
 
-    formula.process(this.widget.controller._symbol);
+    formula.process(cursor, this.widget.controller._symbol);
 
     this._textController.value = this._textController.value.copyWith(
-          text: formula.expr,
-          selection: TextSelection.collapsed(offset: formula.getCharOffsetAtCursor()),
+          text: _stringifySymbols(formula.symbols),
+          selection: TextSelection.collapsed(offset: _getCharOffsetByFormulaCursor(formula.symbols, formula.cursor)),
         );
   }
 }
@@ -128,4 +128,49 @@ class MathFormulaViewController extends ChangeNotifier {
 
     super.dispose();
   }
+}
+
+String _stringifySymbols(List<MathSymbol> symbols) {
+  String expr = symbols.map<String>((MathSymbol symbol) => stringifySymbol(symbol)).join();
+
+  return expr.isEmpty ? '0' : expr;
+}
+
+int _getCharOffsetByFormulaCursor(List<MathSymbol> symbols, int cursor) {
+  if (cursor == MathFormula.INVALID_CURSOR) {
+    return 1;
+  }
+
+  return symbols
+      .getRange(0, cursor + 1)
+      .map<int>((MathSymbol symbol) => stringifySymbol(symbol).length)
+      .reduce((total, v) => total + v);
+}
+
+int _getFormulaCursorByCharOffset(List<MathSymbol> symbols, int charOffset) {
+  int charAt = charOffset - 1;
+  if (charAt < 0 || symbols.isEmpty) {
+    return MathFormula.INVALID_CURSOR;
+  }
+
+  int offset = -1;
+  for (int i = 0; i < symbols.length; i++) {
+    MathSymbol symbol = symbols[i];
+
+    int leftSpace = (symbol.isOperator && !symbol.isSign && !symbol.isPercent) || symbol.isRightBracket ? 1 : 0;
+
+    offset += leftSpace;
+    if (charAt <= offset) {
+      return i - (leftSpace > 0 ? 1 : 0);
+    }
+
+    int rightSpace = (symbol.isOperator && !symbol.isSign && !symbol.isPercent) || symbol.isLeftBracket ? 1 : 0;
+
+    offset += symbol.text.length + rightSpace;
+    if (charAt <= offset) {
+      return i;
+    }
+  }
+
+  return symbols.length - 1;
 }

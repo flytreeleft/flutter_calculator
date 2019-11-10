@@ -19,7 +19,7 @@ import 'dart:math' as math;
 import './math_symbol.dart';
 
 String stringifySymbol(MathSymbol symbol) {
-  if (symbol.isOperator) {
+  if (symbol.isOperator && !symbol.isSign && !symbol.isPercent) {
     return ' ${symbol.text} ';
   }
 
@@ -28,30 +28,35 @@ String stringifySymbol(MathSymbol symbol) {
 
 class MathFormulaValidation {}
 
+final random = math.Random();
+
 class MathFormula {
-  static const int _INVALID_CURSOR = -1;
+  static const int INVALID_CURSOR = -1;
 
   final List<MathSymbol> _symbols;
 
-  int _cursor = _INVALID_CURSOR;
+  int _cursor = INVALID_CURSOR;
 
   MathFormula({expr}) : this._symbols = parseFormula(expr);
 
   int get cursor => this._cursor;
 
-  String get expr {
-    String expr = this._symbols.map<String>((MathSymbol symbol) => stringifySymbol(symbol)).join();
+  List<MathSymbol> get symbols => [...this._symbols];
 
-    return expr.isEmpty ? '0' : expr;
+  @override
+  String toString() {
+    return this._symbols.map<String>((MathSymbol symbol) => stringifySymbol(symbol)).join();
   }
 
-  void process(MathSymbol symbol) {
+  void process(int cursor, MathSymbol symbol) {
+    this._cursor = cursor;
+
     switch (symbol) {
       case MathSymbols.clear:
         this.clear();
         break;
       case MathSymbols.delete:
-        this.deleteSymbolAtCursor();
+        this._deleteSymbolAtCursor();
         break;
       case MathSymbols.redo:
         this.redo();
@@ -62,18 +67,18 @@ class MathFormula {
       case MathSymbols.equals:
         break;
       default:
-        this.addSymbolAtCursor(symbol);
+        this._addSymbolAtCursor(symbol);
     }
   }
 
   double evaluate() {
     // TODO if get an invalid result, just return `null`
-    return null;
+    return random.nextDouble();
   }
 
   void clear() {
     this._symbols.clear();
-    this._cursor = _INVALID_CURSOR;
+    this._cursor = INVALID_CURSOR;
     // TODO record cursor and cleared symbols
   }
 
@@ -89,25 +94,9 @@ class MathFormula {
 
   bool canUndo() => false;
 
-  int getCharOffsetAtCursor() {
-    if (this.cursor == _INVALID_CURSOR) {
-      return 1;
-    }
-
-    return this
-        ._symbols
-        .getRange(0, this.cursor + 1)
-        .map<int>((MathSymbol symbol) => stringifySymbol(symbol).length)
-        .reduce((total, v) => total + v);
-  }
-
-  void moveCursorToCharOffset(int charOffset) {
-    this._cursor = this.getCursorToCharOffset(charOffset);
-  }
-
-  void addSymbolAtCursor(MathSymbol symbol) {
+  void _addSymbolAtCursor(MathSymbol symbol) {
     // TODO record cursor and added symbol
-    if (!this.isAccepted(this.cursor, symbol)) {
+    if (!this._isAccepted(this.cursor, symbol)) {
       return;
     }
 
@@ -122,9 +111,9 @@ class MathFormula {
     }
   }
 
-  void deleteSymbolAtCursor() {
+  void _deleteSymbolAtCursor() {
     // TODO record cursor and deleted symbol
-    MathSymbol currentSymbol = this.getSymbol(this.cursor);
+    MathSymbol currentSymbol = this._getSymbol(this.cursor);
     if (currentSymbol == null) {
       return;
     }
@@ -134,7 +123,7 @@ class MathFormula {
         this._removeRightBracketSymbolAtCursor();
         break;
       case MathSymbols.left_bracket:
-        MathSymbol rightSymbol = this.getRightSymbol(this.cursor);
+        MathSymbol rightSymbol = this._getRightSymbol(this.cursor);
 
         if (rightSymbol == null) {
           this._removeSymbolAtCursor();
@@ -148,55 +137,27 @@ class MathFormula {
     }
   }
 
-  int getCursorToCharOffset(int charOffset) {
-    int charAt = charOffset - 1;
-    if (charAt < 0 || this._symbols.isEmpty) {
-      return _INVALID_CURSOR;
-    }
-
-    int offset = -1;
-    for (int i = 0; i < this._symbols.length; i++) {
-      MathSymbol symbol = this._symbols[i];
-
-      int leftSpace = symbol.isOperator || symbol.isRightBracket ? 1 : 0;
-
-      offset += leftSpace;
-      if (charAt <= offset) {
-        return i - (leftSpace > 0 ? 1 : 0);
-      }
-
-      int rightSpace = symbol.isOperator || symbol.isLeftBracket ? 1 : 0;
-
-      offset += symbol.text.length + rightSpace;
-      if (charAt <= offset) {
-        return i;
-      }
-    }
-
-    return this._symbols.length - 1;
-  }
-
-  bool isAccepted(int index, MathSymbol symbol) {
+  bool _isAccepted(int index, MathSymbol symbol) {
     if (symbol == null) {
       return false;
     }
     return true;
   }
 
-  MathSymbol lastSymbol() {
+  MathSymbol _lastSymbol() {
     return this._symbols.isNotEmpty ? this._symbols.last : null;
   }
 
-  MathSymbol getSymbol(int index) {
+  MathSymbol _getSymbol(int index) {
     return index < 0 || index >= this._symbols.length ? null : this._symbols.elementAt(index);
   }
 
-  MathSymbol getLeftSymbol(int index) {
-    return index <= 0 || index >= this._symbols.length ? null : this.getSymbol(index - 1);
+  MathSymbol _getLeftSymbol(int index) {
+    return index <= 0 || index >= this._symbols.length ? null : this._getSymbol(index - 1);
   }
 
-  MathSymbol getRightSymbol(int index) {
-    return index < 0 || index >= this._symbols.length - 1 ? null : this.getSymbol(index + 1);
+  MathSymbol _getRightSymbol(int index) {
+    return index < 0 || index >= this._symbols.length - 1 ? null : this._getSymbol(index + 1);
   }
 
   void _insertSymbolAtCursor(MathSymbol symbol) {
@@ -215,7 +176,7 @@ class MathFormula {
     List<MathSymbol> rightBrackets = <MathSymbol>[];
 
     while (index >= 0) {
-      MathSymbol symbol = this.getSymbol(index);
+      MathSymbol symbol = this._getSymbol(index);
 
       if (symbol.isRightBracket) {
         rightBrackets.add(symbol);

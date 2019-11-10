@@ -119,6 +119,10 @@ class MathSymbol {
 
   bool get isNumber => this._type == _MathSymbolType.number;
 
+  bool get isSign => this == MathSymbols.sign;
+
+  bool get isPercent => this == MathSymbols.percent;
+
   @override
   String toString() => this.text;
 }
