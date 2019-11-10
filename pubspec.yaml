@@ -1,11 +1,11 @@
 name: flutter_calculator
-description: A Flutter Calculator
-version: 0.0.1
-author:
-homepage:
+description: A simple, smart and powerful flutter calculator widget.
+version: 0.1.0
+author: flytreeleft <flytreeleft@crazydan.org>
+homepage: https://github.com/flytreeleft/flutter_calculator
 
 environment:
-  sdk: ">=2.1.0 <3.0.0"
+  sdk: ">=2.2.2 <3.0.0"
 
 dependencies:
   flutter:
@@ -14,12 +14,19 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  # https://pub.dev/packages/test
+  test: 1.6.3
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
 
 # The following section is specific to Flutter.
 flutter:
+
+  # The following line ensures that the Material Icons font is
+  # included with your application, so that you can use the icons in
+  # the material Icons class.
+  uses-material-design: true
 
   # To add assets to your package, add an assets section, like this:
   # assets:
