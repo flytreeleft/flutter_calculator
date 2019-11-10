@@ -145,7 +145,7 @@ class _CalculatorState extends State<Calculator> {
   }
 
   void _handleOk() {
-    Navigator.pop(context, this._formulaViewController.formula);
+    Navigator.pop(context, this._formulaViewController.formula.evaluate());
   }
 
   void _handlePressedKey(MathSymbol symbol) {
@@ -156,7 +156,43 @@ class _CalculatorState extends State<Calculator> {
     final double result = this._formulaViewController.formula.evaluate();
 
     this._formulaResultController.value = this._formulaResultController.value.copyWith(
-          text: '= ${this._formulaViewController.formula.expr}', //"= ${result?.toString() ?? '0.0'}",
+          text: "= ${result?.toString() ?? '0.0'}",
         );
   }
+}
+
+Future<double> showCalculator({
+  @required BuildContext context,
+  String expr,
+  Locale locale,
+  TextDirection textDirection,
+  TransitionBuilder builder,
+}) async {
+  assert(context != null);
+
+  Widget child = Calculator(
+    expr: expr,
+  );
+
+  if (textDirection != null) {
+    child = Directionality(
+      textDirection: textDirection,
+      child: child,
+    );
+  }
+
+  if (locale != null) {
+    child = Localizations.override(
+      context: context,
+      locale: locale,
+      child: child,
+    );
+  }
+
+  return await showDialog<double>(
+    context: context,
+    builder: (BuildContext context) {
+      return builder == null ? child : builder(context, child);
+    },
+  );
 }
