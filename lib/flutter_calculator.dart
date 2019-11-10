@@ -14,10 +14,5 @@
  * limitations under the License.
  */
 
-library flutter_calculator;
-
-/// A Calculator.
-class Calculator {
-  /// Returns [value] plus 1.
-  int addOne(int value) => value + 1;
-}
+// https://dart.dev/guides/libraries/create-library-packages
+export 'src/calculator.dart';
