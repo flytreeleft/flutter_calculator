@@ -17,6 +17,8 @@
 import 'dart:math' as math;
 
 import './math_symbol.dart';
+import './math_formula_validator.dart';
+import './math_formula_evaluator.dart';
 
 String stringifySymbol(MathSymbol symbol) {
   if (symbol.isOperator && !symbol.isSign && !symbol.isPercent) {
@@ -26,18 +28,22 @@ String stringifySymbol(MathSymbol symbol) {
   return symbol.isLeftBracket ? '${symbol.text} ' : symbol.isRightBracket ? ' ${symbol.text}' : symbol.text;
 }
 
-class MathFormulaValidation {}
-
-final random = math.Random();
+//final random = math.Random();
 
 class MathFormula {
   static const int INVALID_CURSOR = -1;
 
   final List<MathSymbol> _symbols;
 
+  MathFormulaValidator _validator;
+  MathFormulaEvaluator _evaluator;
+
   int _cursor = INVALID_CURSOR;
 
-  MathFormula({expr}) : this._symbols = parseFormula(expr);
+  MathFormula({expr}) : this._symbols = parseFormula(expr) {
+    this._validator = MathFormulaValidator(this);
+    this._evaluator = MathFormulaEvaluator(this);
+  }
 
   int get cursor => this._cursor;
 
@@ -72,8 +78,7 @@ class MathFormula {
   }
 
   double evaluate() {
-    // TODO if get an invalid result, just return `null`
-    return random.nextDouble();
+    return this._evaluator.evaluate();
   }
 
   void clear() {
@@ -94,9 +99,24 @@ class MathFormula {
 
   bool canUndo() => false;
 
+  List<MathSymbol> getSymbols(int start, {int end: -1}) {
+    return this._symbols.getRange(start, end == -1 ? this._symbols.length : end);
+  }
+
+  MathSymbol getSymbol(int index) {
+    return index < 0 || index >= this._symbols.length ? null : this._symbols.elementAt(index);
+  }
+
+  MathSymbol getLeftSymbol(int index) {
+    return index <= 0 || index >= this._symbols.length ? null : this.getSymbol(index - 1);
+  }
+
+  MathSymbol getRightSymbol(int index) {
+    return index < 0 || index >= this._symbols.length - 1 ? null : this.getSymbol(index + 1);
+  }
+
   void _addSymbolAtCursor(MathSymbol symbol) {
-    // TODO record cursor and added symbol
-    if (!this._isAccepted(this.cursor, symbol)) {
+    if (!this._validator.isAccepted(this.cursor, symbol)) {
       return;
     }
 
@@ -112,8 +132,7 @@ class MathFormula {
   }
 
   void _deleteSymbolAtCursor() {
-    // TODO record cursor and deleted symbol
-    MathSymbol currentSymbol = this._getSymbol(this.cursor);
+    MathSymbol currentSymbol = this.getSymbol(this.cursor);
     if (currentSymbol == null) {
       return;
     }
@@ -123,7 +142,7 @@ class MathFormula {
         this._removeRightBracketSymbolAtCursor();
         break;
       case MathSymbols.left_bracket:
-        MathSymbol rightSymbol = this._getRightSymbol(this.cursor);
+        MathSymbol rightSymbol = this.getRightSymbol(this.cursor);
 
         if (rightSymbol == null) {
           this._removeSymbolAtCursor();
@@ -137,46 +156,26 @@ class MathFormula {
     }
   }
 
-  bool _isAccepted(int index, MathSymbol symbol) {
-    if (symbol == null) {
-      return false;
-    }
-    return true;
-  }
-
-  MathSymbol _lastSymbol() {
-    return this._symbols.isNotEmpty ? this._symbols.last : null;
-  }
-
-  MathSymbol _getSymbol(int index) {
-    return index < 0 || index >= this._symbols.length ? null : this._symbols.elementAt(index);
-  }
-
-  MathSymbol _getLeftSymbol(int index) {
-    return index <= 0 || index >= this._symbols.length ? null : this._getSymbol(index - 1);
-  }
-
-  MathSymbol _getRightSymbol(int index) {
-    return index < 0 || index >= this._symbols.length - 1 ? null : this._getSymbol(index + 1);
-  }
-
   void _insertSymbolAtCursor(MathSymbol symbol) {
+    // TODO record cursor and added symbol
     this._symbols.insert(this.cursor + 1, symbol);
     this._cursor += 1;
   }
 
   void _removeSymbolAtCursor() {
+    // TODO record cursor and deleted symbol
     this._symbols.removeAt(this.cursor);
     this._cursor -= 1;
   }
 
   void _removeRightBracketSymbolAtCursor() {
+    // TODO record cursor and deleted symbol
     int index = this.cursor - 1;
 
     List<MathSymbol> rightBrackets = <MathSymbol>[];
 
     while (index >= 0) {
-      MathSymbol symbol = this._getSymbol(index);
+      MathSymbol symbol = this.getSymbol(index);
 
       if (symbol.isRightBracket) {
         rightBrackets.add(symbol);

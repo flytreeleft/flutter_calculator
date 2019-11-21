@@ -25,6 +25,11 @@ enum _MathSymbolType {
   decimal,
 }
 
+enum _MathSymbolCombination {
+  left,
+  right,
+}
+
 double _opPlus(a, b) => a + b;
 
 double _opMinus(a, b) => a - b;
@@ -68,12 +73,12 @@ abstract class MathSymbols {
   static const MathSymbol equals = const MathSymbol('=', _MathSymbolType.controller);
 
   // Operators
-  static const MathSymbol plus = const MathOperatorSymbol('+', _opPlus, 2, 0);
-  static const MathSymbol minus = const MathOperatorSymbol('-', _opMinus, 2, 0);
-  static const MathSymbol multiply = const MathOperatorSymbol('×', _opMultiply, 2, 10);
-  static const MathSymbol divide = const MathOperatorSymbol('÷', _opDivide, 2, 10);
-  static const MathSymbol sign = const MathOperatorSymbol('±', _opSign, 1, 20);
-  static const MathSymbol percent = const MathOperatorSymbol('%', _opPercent, 1, 30);
+  static const MathSymbol plus = const MathOperatorSymbol('+', _MathSymbolCombination.left, _opPlus, 2, 0);
+  static const MathSymbol minus = const MathOperatorSymbol('-', _MathSymbolCombination.left, _opMinus, 2, 0);
+  static const MathSymbol multiply = const MathOperatorSymbol('×', _MathSymbolCombination.left, _opMultiply, 2, 10);
+  static const MathSymbol divide = const MathOperatorSymbol('÷', _MathSymbolCombination.left, _opDivide, 2, 10);
+  static const MathSymbol sign = const MathOperatorSymbol('±', _MathSymbolCombination.right, _opSign, 1, 20);
+  static const MathSymbol percent = const MathOperatorSymbol('%', _MathSymbolCombination.left, _opPercent, 1, 30);
 
   // Brackets
   static const MathSymbol bracket = const MathSymbol('( )', _MathSymbolType.bracket);
@@ -115,6 +120,8 @@ class MathSymbol {
 
   bool get isRightBracket => this._type == _MathSymbolType.right_bracket;
 
+  bool get isBracket => this.isLeftBracket || this.isRightBracket;
+
   bool get isDecimal => this._type == _MathSymbolType.decimal;
 
   bool get isNumber => this._type == _MathSymbolType.number;
@@ -128,15 +135,17 @@ class MathSymbol {
 }
 
 class MathOperatorSymbol extends MathSymbol {
+  final _MathSymbolCombination combination;
   final Function fn;
   final int fnArgs;
   final int priority;
 
-  const MathOperatorSymbol(String value, Function fn, int fnArgs, int priority)
-      : this.fn = fn,
-        this.fnArgs = fnArgs,
-        this.priority = priority,
-        super(value, _MathSymbolType.operator);
+  const MathOperatorSymbol(String value, this.combination, this.fn, this.fnArgs, this.priority)
+      : super(value, _MathSymbolType.operator);
+
+  bool get isLeftCombination => this.combination == _MathSymbolCombination.left;
+
+  bool get isRightCombination => this.combination == _MathSymbolCombination.right;
 }
 
 List<MathSymbol> parseFormula(String formula) {
