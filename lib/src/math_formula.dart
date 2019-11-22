@@ -16,6 +16,8 @@
 
 import 'dart:math' as math;
 
+import 'package:flutter/foundation.dart';
+
 import './math_symbol.dart';
 import './math_formula_validator.dart';
 import './math_formula_evaluator.dart';
@@ -28,13 +30,13 @@ String stringifySymbol(MathSymbol symbol) {
   return symbol.isLeftBracket ? '${symbol.text} ' : symbol.isRightBracket ? ' ${symbol.text}' : symbol.text;
 }
 
-//final random = math.Random();
-
 class MathFormula {
   static const int INVALID_CURSOR = -1;
 
-  final List<MathSymbol> _symbols;
+  final List<_History> _undoHistories = [];
+  final List<_History> _redoHistories = [];
 
+  List<MathSymbol> _symbols;
   MathFormulaValidator _validator;
   MathFormulaEvaluator _evaluator;
 
@@ -55,49 +57,66 @@ class MathFormula {
   }
 
   void process(int cursor, MathSymbol symbol) {
-    this._cursor = cursor;
+    switch (symbol) {
+      case MathSymbols.redo:
+        return this.redo();
+      case MathSymbols.undo:
+        return this.undo();
+      case MathSymbols.equals:
+        return;
+    }
 
+    int oldCursor = this._cursor;
+    List<MathSymbol> oldSymbols = [...this._symbols];
+
+    this._cursor = cursor;
     switch (symbol) {
       case MathSymbols.clear:
-        this.clear();
+        this._clearAllSymbols();
         break;
       case MathSymbols.delete:
         this._deleteSymbolAtCursor();
         break;
-      case MathSymbols.redo:
-        this.redo();
-        break;
-      case MathSymbols.undo:
-        this.undo();
-        break;
-      case MathSymbols.equals:
-        break;
       default:
         this._addSymbolAtCursor(symbol);
     }
+
+    this._recordHistory(oldCursor, oldSymbols);
   }
 
   double evaluate() {
     return this._evaluator.evaluate();
   }
 
-  void clear() {
-    this._symbols.clear();
-    this._cursor = INVALID_CURSOR;
-    // TODO record cursor and cleared symbols
-  }
-
   void redo() {
-    // TODO revert symbol and move cursor
+    if (!this.canRedo()) {
+      return;
+    }
+
+    // Record current state
+    this._undoHistories.add(_History(this._cursor, [...this._symbols]));
+
+    // Revert to previous state
+    _History history = this._redoHistories.removeLast();
+    this._applyHistory(history);
   }
 
-  bool canRedo() => false;
+  bool canRedo() => this._redoHistories.isNotEmpty;
 
   void undo() {
-    // TODO revert redo and move cursor
+    if (!this.canUndo()) {
+      return;
+    }
+
+    // Record current state
+    this._redoHistories.add(_History(this._cursor, [...this._symbols]));
+
+    // Revert to previous state
+    _History history = this._undoHistories.removeLast();
+    this._applyHistory(history);
   }
 
-  bool canUndo() => false;
+  bool canUndo() => this._undoHistories.isNotEmpty;
 
   List<MathSymbol> getSymbols(int start, {int end: -1}) {
     return this._symbols.getRange(start, end == -1 ? this._symbols.length : end);
@@ -115,6 +134,36 @@ class MathFormula {
     return index < 0 || index >= this._symbols.length - 1 ? null : this.getSymbol(index + 1);
   }
 
+  void _applyHistory(_History history) {
+    if (history._cursor != null) {
+      this._cursor = history._cursor;
+    }
+
+    if (history._symbols != null) {
+      this._symbols = [...history._symbols];
+    }
+  }
+
+  void _recordHistory(int oldCursor, List<MathSymbol> oldSymbols) {
+    bool cursorEquals = oldCursor == this._cursor;
+    bool symbolsEquals = listEquals(oldSymbols, this._symbols);
+
+    if (cursorEquals && symbolsEquals) {
+      return;
+    }
+
+    this._redoHistories.clear();
+    this._undoHistories.add(_History(
+          cursorEquals ? null : oldCursor,
+          symbolsEquals ? null : oldSymbols,
+        ));
+  }
+
+  void _clearAllSymbols() {
+    this._symbols.clear();
+    this._cursor = INVALID_CURSOR;
+  }
+
   void _addSymbolAtCursor(MathSymbol symbol) {
     if (!this._validator.isAccepted(this.cursor, symbol)) {
       return;
@@ -122,9 +171,7 @@ class MathFormula {
 
     switch (symbol) {
       case MathSymbols.bracket:
-        this._insertSymbolAtCursor(MathSymbols.left_bracket);
-        this._insertSymbolAtCursor(MathSymbols.right_bracket);
-        this._cursor -= 1;
+        this._insertBracketSymbolAtCursor();
         break;
       default:
         this._insertSymbolAtCursor(symbol);
@@ -157,19 +204,22 @@ class MathFormula {
   }
 
   void _insertSymbolAtCursor(MathSymbol symbol) {
-    // TODO record cursor and added symbol
     this._symbols.insert(this.cursor + 1, symbol);
     this._cursor += 1;
   }
 
   void _removeSymbolAtCursor() {
-    // TODO record cursor and deleted symbol
     this._symbols.removeAt(this.cursor);
     this._cursor -= 1;
   }
 
+  void _insertBracketSymbolAtCursor() {
+    this._symbols.insert(this.cursor + 1, MathSymbols.left_bracket);
+    this._cursor += 1;
+    this._symbols.insert(this.cursor + 1, MathSymbols.right_bracket);
+  }
+
   void _removeRightBracketSymbolAtCursor() {
-    // TODO record cursor and deleted symbol
     int index = this.cursor - 1;
 
     List<MathSymbol> rightBrackets = <MathSymbol>[];
@@ -193,4 +243,11 @@ class MathFormula {
     this._symbols.removeRange(math.max(0, index), this.cursor + 1);
     this._cursor = index - 1;
   }
+}
+
+class _History {
+  final List<MathSymbol> _symbols;
+  final int _cursor;
+
+  _History(this._cursor, this._symbols);
 }

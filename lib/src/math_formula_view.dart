@@ -33,10 +33,17 @@ class _MathFormulaViewState extends State<MathFormulaView> {
   final FocusNode _focusNode = FocusNode();
   final TextEditingController _textController = TextEditingController(text: '0');
 
+  MathFormula get _formula => this.widget.controller.formula;
+
+  MathSymbol get _symbol => this.widget.controller._symbol;
+
+  int get _charOffset => this._textController.value.selection.baseOffset;
+
   @override
   void initState() {
     super.initState();
 
+    this._textController.addListener(this._handleTextEditingChanged);
     this.widget.controller._masterListener = this._didProcessMathSymbol;
 
     this._didProcessMathSymbol();
@@ -57,6 +64,7 @@ class _MathFormulaViewState extends State<MathFormulaView> {
   @override
   void dispose() {
     this.widget.controller._masterListener = null;
+    this._textController.removeListener(this._handleTextEditingChanged);
     this._textController.dispose();
 
     super.dispose();
@@ -84,19 +92,27 @@ class _MathFormulaViewState extends State<MathFormulaView> {
     );
   }
 
+  void _handleTextEditingChanged() {
+    // Only change cursor
+    this._processMathSymbolAtCursor(null);
+  }
+
   void _didProcessMathSymbol() {
-    final MathFormula formula = this.widget.controller.formula;
-
-    // The location of the char which is behind the cursor
-    int charOffset = this._textController.value.selection.baseOffset;
-    int cursor = _getFormulaCursorByCharOffset(formula.symbols, charOffset);
-
-    formula.process(cursor, this.widget.controller._symbol);
+    this._processMathSymbolAtCursor(this._symbol);
 
     this._textController.value = this._textController.value.copyWith(
-          text: _stringifySymbols(formula.symbols),
-          selection: TextSelection.collapsed(offset: _getCharOffsetByFormulaCursor(formula.symbols, formula.cursor)),
+          text: _stringifySymbols(this._formula.symbols),
+          selection: TextSelection.collapsed(
+            offset: _getCharOffsetByFormulaCursor(this._formula.symbols, this._formula.cursor),
+          ),
         );
+  }
+
+  void _processMathSymbolAtCursor(MathSymbol symbol) {
+    // The location of the char which is behind the cursor
+    final cursor = _getFormulaCursorByCharOffset(this._formula.symbols, this._charOffset);
+
+    this._formula.process(cursor, symbol);
   }
 }
 
