@@ -36,6 +36,7 @@ class Calculator extends StatefulWidget {
 class _CalculatorState extends State<Calculator> {
   final MathFormulaViewController _formulaViewController;
 
+  final KeyPadController _keyPadController = KeyPadController([MathSymbols.undo, MathSymbols.redo]);
   final TextEditingController _formulaResultController = TextEditingController();
 
   _CalculatorState(expr) : this._formulaViewController = MathFormulaViewController(expr: expr);
@@ -59,6 +60,7 @@ class _CalculatorState extends State<Calculator> {
   @override
   void dispose() {
     this._formulaViewController.dispose();
+    this._keyPadController.dispose();
     this._formulaResultController.dispose();
 
     super.dispose();
@@ -109,6 +111,7 @@ class _CalculatorState extends State<Calculator> {
               Container(
                 height: height,
                 child: KeyPad(
+                  controller: this._keyPadController,
                   onPress: this._handlePressedKey,
                 ),
               ),
@@ -150,6 +153,16 @@ class _CalculatorState extends State<Calculator> {
 
   void _handlePressedKey(MathSymbol symbol) {
     this._formulaViewController.process(symbol);
+
+    List<MathSymbol> disabledKeys = [];
+    if (!this._formulaViewController.formula.canUndo()) {
+      disabledKeys.add(MathSymbols.undo);
+    }
+    if (!this._formulaViewController.formula.canRedo()) {
+      disabledKeys.add(MathSymbols.redo);
+    }
+
+    this._keyPadController.disableKeys(disabledKeys);
   }
 
   void _handleFormulaUpdated() {

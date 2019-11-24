@@ -16,6 +16,7 @@
 
 import 'dart:math' as math;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 
@@ -68,7 +69,7 @@ const List<MathSymbol> opSymbols = <MathSymbol>[
   MathSymbols.multiply,
   MathSymbols.minus,
   MathSymbols.plus,
-  MathSymbols.redo,
+  MathSymbols.undo,
   MathSymbols.delete,
 ];
 
@@ -76,8 +77,9 @@ typedef MathSymbolOnPress = void Function(MathSymbol symbol);
 
 class KeyPad extends StatefulWidget {
   final MathSymbolOnPress onPress;
+  final KeyPadController controller;
 
-  const KeyPad({Key key, @required this.onPress}) : super(key: key);
+  const KeyPad({Key key, @required this.onPress, this.controller}) : super(key: key);
 
   @override
   State<StatefulWidget> createState() => _KeyPadState();
@@ -85,8 +87,40 @@ class KeyPad extends StatefulWidget {
 
 class _KeyPadState extends State<KeyPad> {
   @override
+  void initState() {
+    if (this.widget.controller != null) {
+      this.widget.controller.addListener(this._handleChangedDisabledKeys);
+    }
+
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    if (this.widget.controller != null) {
+      this.widget.controller.removeListener(this._handleChangedDisabledKeys);
+    }
+
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    return Row(
+      children: <Widget>[
+        Flexible(
+          child: this._createNumberSymbolsPane(context, numberSymbols),
+        ),
+        Container(
+          child: this._createOpSymbolsPane(context, opSymbols),
+        ),
+      ],
+    );
+  }
+
+  Widget _createNumberSymbolsPane(BuildContext context, List<MathSymbol> numberSymbols) {
     final ThemeData theme = Theme.of(context);
+
     final List<Widget> numberPads = numberSymbols.map<Widget>((MathSymbol symbol) {
       final bool isClear = symbol == MathSymbols.clear;
 
@@ -103,76 +137,160 @@ class _KeyPadState extends State<KeyPad> {
 
       return FlatButton(
         color: isClear ? theme.primaryColor : null,
-        shape: CircleBorder(),
+        shape: const CircleBorder(),
         onPressed: () => this.widget.onPress(symbol),
         child: pad,
       );
     }).toList();
 
+    return GridView.custom(
+      gridDelegate: const _NumberPadGridDelegate(),
+      childrenDelegate: SliverChildListDelegate(numberPads, addRepaintBoundaries: false),
+      padding: const EdgeInsets.symmetric(vertical: 6.0),
+    );
+  }
+
+  Widget _createOpSymbolsPane(BuildContext context, List<MathSymbol> opSymbols) {
+    final ThemeData theme = Theme.of(context);
+
+    final List<Widget> opPads = opSymbols.map<Widget>((MathSymbol symbol) {
+      final Widget opPad = this._createOpSymbolPad(context, symbol);
+      final Color opPadColor = (opPad is FlatButton) ? opPad.color : null;
+
+      return Expanded(
+        child: Container(
+          decoration: BoxDecoration(
+            border: Border(
+              left: BorderSide(width: 1.0, color: opPadColor ?? theme.dividerColor),
+            ),
+          ),
+          child: opPad,
+        ),
+      );
+    }).toList();
+
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: opPads,
+    );
+  }
+
+  Widget _createOpSymbolPad(BuildContext context, MathSymbol symbol) {
+    if (symbol == MathSymbols.undo) {
+      return this._createUndoOpSymbolPad(context);
+    }
+
+    final ThemeData theme = Theme.of(context);
+
+    final double fontSize = 14.0 * 1.5;
+    final ShapeBorder shape = const RoundedRectangleBorder(borderRadius: BorderRadius.zero);
+
+    Color opPadColor;
+    Widget opPad;
+    bool disabled = this._isDisabledKey(symbol);
+
+    switch (symbol) {
+      case MathSymbols.delete:
+        opPadColor = theme.primaryColor;
+        opPad = Text(
+          symbol.text,
+          style: TextStyle(color: theme.primaryTextTheme.title.color, fontSize: fontSize),
+        );
+        break;
+      default:
+        opPad = Text(
+          symbol.text,
+          style: TextStyle(
+            color: Colors.grey,
+            fontSize: fontSize,
+          ),
+        );
+    }
+
+    return FlatButton(
+      color: opPadColor,
+      shape: shape,
+      onPressed: disabled ? null : () => this.widget.onPress(symbol),
+      child: opPad,
+    );
+  }
+
+  Widget _createUndoOpSymbolPad(BuildContext context) {
+    final double fontSize = 14.0 * 1.5;
+    final ShapeBorder shape = const RoundedRectangleBorder(borderRadius: BorderRadius.zero);
+
+    final ButtonThemeData buttonTheme = ButtonTheme.of(context);
+    final double buttonMinWidth = buttonTheme.constraints.minWidth / 2;
+
+    final bool disabledUndo = this._isDisabledKey(MathSymbols.undo);
+    final bool disabledRedo = this._isDisabledKey(MathSymbols.redo);
+    final Color disabledIconColor = Colors.black12;
+
     return Row(
+      mainAxisSize: MainAxisSize.min,
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: <Widget>[
-        Flexible(
-          child: GridView.custom(
-            gridDelegate: const _NumberPadGridDelegate(),
-            childrenDelegate: SliverChildListDelegate(numberPads, addRepaintBoundaries: false),
-            padding: const EdgeInsets.symmetric(vertical: 6.0),
+        MaterialButton(
+          shape: shape,
+          // >>>> clear padding
+          padding: EdgeInsets.zero,
+          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          // <<<< end
+          minWidth: buttonMinWidth,
+          onPressed: disabledUndo ? null : () => this.widget.onPress(MathSymbols.undo),
+          child: Icon(
+            Icons.undo,
+            size: fontSize,
+            color: disabledUndo ? disabledIconColor : Colors.grey,
           ),
         ),
-        Container(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: opSymbols.map<Widget>((MathSymbol symbol) {
-              Color opPadColor;
-              Widget opPad;
-
-              switch (symbol) {
-                case MathSymbols.redo:
-                  opPadColor = theme.dividerColor;
-                  opPad = Icon(
-                    Icons.redo,
-                    size: 14.0 * 2.0,
-                    color: Colors.grey,
-                  );
-                  break;
-                case MathSymbols.delete:
-                  opPadColor = theme.primaryColor;
-                  opPad = Text(
-                    symbol.text,
-                    style: TextStyle(color: theme.primaryTextTheme.title.color, fontSize: 14.0 * 1.5),
-                  );
-                  break;
-                default:
-                  opPad = Text(
-                    symbol.text,
-                    style: TextStyle(
-                      color: Colors.grey,
-                      fontSize: 14.0 * 1.5,
-                    ),
-                  );
-              }
-
-              return Flexible(
-                child: Container(
-                  decoration: BoxDecoration(
-                    border: Border(
-                      left: BorderSide(width: 1.0, color: opPadColor != null ? opPadColor : theme.dividerColor),
-                    ),
-                  ),
-                  child: FlatButton(
-                    color: opPadColor,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
-                    onPressed: () => this.widget.onPress(symbol),
-                    child: Container(
-                      alignment: Alignment.center,
-                      child: opPad,
-                    ),
-                  ),
-                ),
-              );
-            }).toList(),
+        MaterialButton(
+          shape: shape,
+          // >>>> clear padding
+          padding: EdgeInsets.zero,
+          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          // <<<< end
+          minWidth: buttonMinWidth,
+          onPressed: disabledRedo ? null : () => this.widget.onPress(MathSymbols.redo),
+          child: Icon(
+            Icons.redo,
+            size: fontSize,
+            color: disabledRedo ? disabledIconColor : Colors.grey,
           ),
         ),
       ],
     );
+  }
+
+  void _handleChangedDisabledKeys() {
+    setState(() {});
+  }
+
+  bool _isDisabledKey(MathSymbol symbol) {
+    return this.widget.controller != null ? this.widget.controller._disabledKeys.contains(symbol) : false;
+  }
+}
+
+class KeyPadController extends ChangeNotifier {
+  List<MathSymbol> _disabledKeys;
+
+  KeyPadController(List<MathSymbol> disabledKeys) : this._disabledKeys = disabledKeys ?? [];
+
+  void disableKeys(List<MathSymbol> keys) {
+    if (listEquals(this._disabledKeys, keys)) {
+      return;
+    }
+
+    this._disabledKeys = keys != null ? [...keys] : [];
+
+    notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    this._disabledKeys = [];
+
+    super.dispose();
   }
 }
