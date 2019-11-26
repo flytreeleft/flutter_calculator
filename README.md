@@ -5,12 +5,12 @@ A simple, smart and powerful flutter calculator widget.
 
 ## Features
 
-- Basic arithmetic: plus, minus, multiply, divide, %.
+- Basic arithmetic: plus, minus, multiply, divide, %, brackets.
 - **Real-Time** calculating.
 - Prevent to input the invalid symbol.
-- **Auto-resize** the formula or result font size when their content is overflow.
+- **Auto-resize** the formula or result font size to adapt the text box's boundary.
 - Supports **undo** and **redo**.
-- Relocate the cursor and input symbol.
+- Supports to relocate and input symbols.
 
 ## Getting Started
 
