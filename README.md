@@ -3,6 +3,15 @@ Flutter Calculator Widget
 
 A simple, smart and powerful flutter calculator widget.
 
+## Features
+
+- Basic arithmetic: plus, minus, multiply, divide, %.
+- **Real-Time** calculating.
+- Prevent to input the invalid symbol.
+- **Auto-resize** the formula or result font size when their content is overflow.
+- Supports **undo** and **redo**.
+- Relocate the cursor and input symbol.
+
 ## Getting Started
 
 - Add dependency to your `pubspec.yaml`:
