@@ -119,7 +119,7 @@ class MathFormula {
   bool canUndo() => this._undoHistories.isNotEmpty;
 
   List<MathSymbol> getSymbols(int start, {int end: -1}) {
-    return this._symbols.getRange(start, end == -1 ? this._symbols.length : end);
+    return this._symbols.getRange(start, end == -1 ? this._symbols.length : end).toList();
   }
 
   MathSymbol getSymbol(int index) {

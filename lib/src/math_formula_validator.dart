@@ -71,7 +71,6 @@ class MathFormulaValidator {
       MathSymbol nonNumKey = this
           ._formula
           .getSymbols(0, end: index)
-          .toList()
           .reversed
           .firstWhere((MathSymbol k) => !k.isNumber, orElse: () => null);
 
