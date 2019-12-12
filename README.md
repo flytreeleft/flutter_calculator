@@ -98,6 +98,15 @@ class _HomePageState extends State<HomePage> {
 
 ![](./docs/images/example.gif)
 
+<!--
+[Making animated GIFs of Flutter apps](https://github.com/flutter/flutter/wiki/Making-animated-GIFs-of-Flutter-apps):
+- Launch app in release mode: `flutter run --release`
+- Record video: `adb shell screenrecord /sdcard/recording.mp4`
+- Interact with app. Terminate the recording with `CTRL+c`
+- Pull the recording to local: `adb pull /sdcard/recording.mp4 ~/Downloads/`
+- Go to http://ezgif.com/video-to-gif and convert the recording to GIF
+-->
+
 ## License
 
 [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0)
