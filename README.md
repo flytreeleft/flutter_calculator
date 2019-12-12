@@ -11,6 +11,7 @@ A simple, smart and powerful flutter calculator widget.
 - **Auto-resize** the formula or result font size to adapt the text box's boundary.
 - Supports **undo** and **redo**.
 - Supports to relocate and input symbols.
+- [**WIP**] Supports to specify the result's precision.
 
 ## Getting Started
 
