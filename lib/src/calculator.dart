@@ -121,7 +121,8 @@ class _CalculatorState extends State<Calculator> {
                     top: BorderSide(width: 1.0, color: theme.dividerColor),
                   ),
                 ),
-                child: ButtonTheme.bar(
+                child: ButtonBarTheme(
+                  data: ButtonBarTheme.of(context),
                   child: ButtonBar(
                     children: <Widget>[
                       FlatButton(
