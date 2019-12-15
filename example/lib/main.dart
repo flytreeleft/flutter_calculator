@@ -27,19 +27,15 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  final FocusNode _focusNode = FocusNode();
   final TextEditingController _textController = TextEditingController(text: '0.00');
 
   @override
   void initState() {
-    this._focusNode.addListener(this._showCalculatorDialog);
-
     super.initState();
   }
 
   @override
   void dispose() {
-    this._focusNode.removeListener(this._showCalculatorDialog);
     this._textController.dispose();
 
     super.dispose();
@@ -59,8 +55,8 @@ class _HomePageState extends State<HomePage> {
           TextField(
             showCursor: false,
             readOnly: true,
-            focusNode: this._focusNode,
             controller: this._textController,
+            onTap: () => this._showCalculatorDialog(),
             textAlign: TextAlign.center,
             textAlignVertical: TextAlignVertical.bottom,
             style: TextStyle(
@@ -75,14 +71,10 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _showCalculatorDialog() async {
-    if (!this._focusNode.hasFocus) {
-      return;
-    }
-
-    final result = await showCalculator(context: this.context);
+    final result = await showCalculator(context: this.context) ?? 0.00;
 
     this._textController.value = this._textController.value.copyWith(
-          text: result?.toString() ?? '0.00',
+          text: result.toStringAsFixed(2),
         );
   }
 }
