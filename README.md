@@ -1,6 +1,8 @@
 Flutter Calculator Widget
 ==================================================
 
+![](./assets/images/icon.png)
+
 A simple, smart and powerful flutter calculator widget.
 
 ## Features
