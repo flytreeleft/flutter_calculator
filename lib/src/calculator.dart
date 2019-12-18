@@ -26,11 +26,13 @@ import './auto_size_editable_text.dart';
 
 class Calculator extends StatefulWidget {
   final String expr;
+  final MathFormulaViewController formulaViewController;
 
-  Calculator({this.expr});
+  Calculator({this.expr, this.formulaViewController});
 
   @override
-  State<StatefulWidget> createState() => _CalculatorState(this.expr);
+  State<StatefulWidget> createState() =>
+      _CalculatorState(expr: this.expr, formulaViewController: this.formulaViewController);
 }
 
 class _CalculatorState extends State<Calculator> {
@@ -39,7 +41,8 @@ class _CalculatorState extends State<Calculator> {
   final KeyPadController _keyPadController = KeyPadController([MathSymbols.undo, MathSymbols.redo]);
   final TextEditingController _formulaResultController = TextEditingController();
 
-  _CalculatorState(expr) : this._formulaViewController = MathFormulaViewController(expr: expr);
+  _CalculatorState({String expr, MathFormulaViewController formulaViewController})
+      : this._formulaViewController = formulaViewController ?? MathFormulaViewController(expr: expr);
 
   @override
   void initState() {
@@ -71,6 +74,95 @@ class _CalculatorState extends State<Calculator> {
     final ThemeData theme = Theme.of(context);
     double height = MediaQuery.of(context).size.height / 2.5;
 
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        Container(
+          padding: const EdgeInsets.all(12.0),
+          color: theme.primaryColor,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: <Widget>[
+              MathFormulaView(this._formulaViewController),
+              AutoSizeEditableText(
+                readOnly: true,
+                autofocus: false,
+                maxLines: 1,
+                focusNode: FocusNode(),
+                controller: this._formulaResultController,
+                minFontSize: 14.0,
+                style: TextStyle(
+                  fontSize: 14.0 * 3.0,
+                  color: theme.primaryTextTheme.title.color,
+                ),
+                textAlign: TextAlign.right,
+                cursorColor: Colors.grey,
+                backgroundCursorColor: theme.focusColor,
+              ),
+            ],
+          ),
+        ),
+        Container(
+          height: height,
+          child: KeyPad(
+            controller: this._keyPadController,
+            onPress: this._handlePressedKey,
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _handlePressedKey(MathSymbol symbol) {
+    this._formulaViewController.process(symbol);
+
+    List<MathSymbol> disabledKeys = [];
+    if (!this._formulaViewController.formula.canUndo()) {
+      disabledKeys.add(MathSymbols.undo);
+    }
+    if (!this._formulaViewController.formula.canRedo()) {
+      disabledKeys.add(MathSymbols.redo);
+    }
+
+    this._keyPadController.disableKeys(disabledKeys);
+  }
+
+  void _handleFormulaUpdated() {
+    final double result = this._formulaViewController.formula.evaluate();
+
+    this._formulaResultController.value = this._formulaResultController.value.copyWith(
+          text: "= ${result?.toString() ?? '0.0'}",
+        );
+  }
+}
+
+class CalculatorDialog extends StatefulWidget {
+  final String expr;
+
+  const CalculatorDialog({Key key, this.expr}) : super(key: key);
+
+  @override
+  State<StatefulWidget> createState() => _CalculatorDialogState(this.expr);
+}
+
+class _CalculatorDialogState extends State<CalculatorDialog> {
+  final MathFormulaViewController _formulaViewController;
+
+  _CalculatorDialogState(String expr) : this._formulaViewController = MathFormulaViewController(expr: expr);
+
+  @override
+  void dispose() {
+    this._formulaViewController.dispose();
+
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+
     return Theme(
       data: theme.copyWith(
         dialogBackgroundColor: Colors.transparent,
@@ -82,38 +174,8 @@ class _CalculatorState extends State<Calculator> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
-              Container(
-                padding: const EdgeInsets.all(12.0),
-                color: theme.primaryColor,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: <Widget>[
-                    MathFormulaView(this._formulaViewController),
-                    AutoSizeEditableText(
-                      readOnly: true,
-                      autofocus: false,
-                      maxLines: 1,
-                      focusNode: FocusNode(),
-                      controller: this._formulaResultController,
-                      minFontSize: 14.0,
-                      style: TextStyle(
-                        fontSize: 14.0 * 3.0,
-                        color: theme.primaryTextTheme.title.color,
-                      ),
-                      textAlign: TextAlign.right,
-                      cursorColor: Colors.grey,
-                      backgroundCursorColor: theme.focusColor,
-                    ),
-                  ],
-                ),
-              ),
-              Container(
-                height: height,
-                child: KeyPad(
-                  controller: this._keyPadController,
-                  onPress: this._handlePressedKey,
-                ),
+              Calculator(
+                formulaViewController: this._formulaViewController,
               ),
               Container(
                 decoration: BoxDecoration(
@@ -151,28 +213,6 @@ class _CalculatorState extends State<Calculator> {
   void _handleOk() {
     Navigator.pop(context, this._formulaViewController.formula.evaluate());
   }
-
-  void _handlePressedKey(MathSymbol symbol) {
-    this._formulaViewController.process(symbol);
-
-    List<MathSymbol> disabledKeys = [];
-    if (!this._formulaViewController.formula.canUndo()) {
-      disabledKeys.add(MathSymbols.undo);
-    }
-    if (!this._formulaViewController.formula.canRedo()) {
-      disabledKeys.add(MathSymbols.redo);
-    }
-
-    this._keyPadController.disableKeys(disabledKeys);
-  }
-
-  void _handleFormulaUpdated() {
-    final double result = this._formulaViewController.formula.evaluate();
-
-    this._formulaResultController.value = this._formulaResultController.value.copyWith(
-          text: "= ${result?.toString() ?? '0.0'}",
-        );
-  }
 }
 
 Future<double> showCalculator({
@@ -184,7 +224,7 @@ Future<double> showCalculator({
 }) async {
   assert(context != null);
 
-  Widget child = Calculator(
+  Widget child = CalculatorDialog(
     expr: expr,
   );
 

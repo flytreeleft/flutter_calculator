@@ -119,6 +119,8 @@ class _MathFormulaViewState extends State<MathFormulaView> {
 class MathFormulaViewController extends ChangeNotifier {
   final MathFormula _formula;
 
+  bool disposed = false;
+
   VoidCallback _masterListener;
 
   MathSymbol _symbol;
@@ -140,6 +142,11 @@ class MathFormulaViewController extends ChangeNotifier {
 
   @override
   void dispose() {
+    if (this.disposed) {
+      return;
+    }
+    this.disposed = true;
+
     this._masterListener = null;
 
     super.dispose();
