@@ -13,6 +13,7 @@ A simple, smart and powerful flutter calculator widget.
 - **Auto-resize** the formula or result font size to adapt the text box's boundary.
 - Supports **undo** and **redo**.
 - Supports to relocate and input symbols.
+- Can be used as an embedded widget or a dialog.
 - [**WIP**] Supports to specify the result's precision.
 
 ## Getting Started
@@ -52,18 +53,10 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  final FocusNode _focusNode = FocusNode();
   final TextEditingController _textController = TextEditingController(text: '0.00');
 
   @override
-  void initState() {
-    this._focusNode.addListener(this._showCalculatorDialog);
-    super.initState();
-  }
-
-  @override
   void dispose() {
-    this._focusNode.removeListener(this._showCalculatorDialog);
     this._textController.dispose();
     super.dispose();
   }
@@ -75,18 +68,14 @@ class _HomePageState extends State<HomePage> {
       body: TextField(
         showCursor: false,
         readOnly: true,
-        focusNode: this._focusNode,
         controller: this._textController,
+        onTap: () => this._showCalculatorDialog(context),
       ),
     );
   }
 
-  void _showCalculatorDialog() async {
-    if (!this._focusNode.hasFocus) {
-      return;
-    }
-
-    final result = await showCalculator(context: this.context);
+  void _showCalculatorDialog(BuildContext context) async {
+    final result = await showCalculator(context: context);
 
     this._textController.value = this._textController.value.copyWith(
           text: result?.toString() ?? '0.00',
