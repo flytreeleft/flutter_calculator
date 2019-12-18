@@ -23,7 +23,7 @@ dependencies:
   flutter_calculator:
     git:
       url: git://github.com/flytreeleft/flutter_calculator.git
-      ref: v0.1.0
+      ref: bugfix-0.1.x
 ```
 
 - Import package `import 'package:flutter_calculator/flutter_calculator.dart';` and call `await showCalculator(context: context);` in your code:
