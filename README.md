@@ -25,7 +25,7 @@ dependencies:
   flutter_calculator:
     git:
       url: git://github.com/flytreeleft/flutter_calculator.git
-      ref: master
+      ref: bugfix-0.1.x
 ```
 
 - Import package `import 'package:flutter_calculator/flutter_calculator.dart';` and call `await showCalculator(context: context);` in your code:
@@ -75,10 +75,10 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _showCalculatorDialog(BuildContext context) async {
-    final result = await showCalculator(context: context);
+    final result = await showCalculator(context: this.context) ?? 0.00;
 
     this._textController.value = this._textController.value.copyWith(
-          text: result?.toString() ?? '0.00',
+          text: result.toStringAsFixed(2),
         );
   }
 }
