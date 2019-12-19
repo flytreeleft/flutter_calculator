@@ -3,7 +3,7 @@ Flutter Calculator Widget
 
 ![](./assets/images/icon.png)
 
-A simple, smart and powerful flutter calculator widget.
+A simple, smart and powerful Flutter calculator widget.
 
 ## Features
 
@@ -15,6 +15,22 @@ A simple, smart and powerful flutter calculator widget.
 - Supports to relocate and input symbols.
 - Can be used as an embedded widget or a dialog.
 - [**WIP**] Supports to specify the result's precision.
+- [**WIP**] Supports to copy and past the formula and the results.
+
+## Demo
+
+- [flutter_calculator_example](./example/)
+
+![](./docs/images/example.gif)
+
+<!--
+[Making animated GIFs of Flutter apps](https://github.com/flutter/flutter/wiki/Making-animated-GIFs-of-Flutter-apps):
+- Launch app in release mode: `flutter run --release`
+- Record video: `adb shell screenrecord /sdcard/recording.mp4`
+- Interact with app. Terminate the recording with `CTRL+c`
+- Pull the recording to local: `adb pull /sdcard/recording.mp4 ~/Downloads/`
+- Go to http://ezgif.com/video-to-gif and convert the recording to GIF
+-->
 
 ## Getting Started
 
@@ -86,21 +102,6 @@ class _HomePageState extends State<HomePage> {
   }
 }
 ```
-
-## Examples
-
-- [flutter_calculator_example](./example/)
-
-![](./docs/images/example.gif)
-
-<!--
-[Making animated GIFs of Flutter apps](https://github.com/flutter/flutter/wiki/Making-animated-GIFs-of-Flutter-apps):
-- Launch app in release mode: `flutter run --release`
-- Record video: `adb shell screenrecord /sdcard/recording.mp4`
-- Interact with app. Terminate the recording with `CTRL+c`
-- Pull the recording to local: `adb pull /sdcard/recording.mp4 ~/Downloads/`
-- Go to http://ezgif.com/video-to-gif and convert the recording to GIF
--->
 
 ## License
 
