@@ -1,11 +1,11 @@
 name: flutter_calculator
 description: A simple, smart and powerful flutter calculator widget.
-version: 0.2.0
+version: 0.3.0
 author: flytreeleft <flytreeleft@crazydan.org>
 homepage: https://github.com/flytreeleft/flutter_calculator
 
 environment:
-  sdk: ">=2.2.2 <3.0.0"
+  sdk: ">=2.7.0 <3.0.0"
 
 dependencies:
   flutter:

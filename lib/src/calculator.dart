@@ -95,7 +95,7 @@ class _CalculatorState extends State<Calculator> {
                 minFontSize: 14.0,
                 style: TextStyle(
                   fontSize: 14.0 * 3.0,
-                  color: theme.primaryTextTheme.title.color,
+                  color: theme.primaryTextTheme.headline1.color,
                 ),
                 textAlign: TextAlign.right,
                 cursorColor: Colors.grey,

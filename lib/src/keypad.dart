@@ -129,7 +129,7 @@ class _KeyPadState extends State<KeyPad> {
         child: Text(
           symbol.text,
           style: TextStyle(
-            color: isClear ? theme.primaryTextTheme.title.color : Colors.grey,
+            color: isClear ? theme.primaryTextTheme.headline1.color : Colors.grey,
             fontSize: 14.0 * 3.0,
           ),
         ),
@@ -194,7 +194,7 @@ class _KeyPadState extends State<KeyPad> {
         opPadColor = theme.primaryColor;
         opPad = Text(
           symbol.text,
-          style: TextStyle(color: theme.primaryTextTheme.title.color, fontSize: fontSize),
+          style: TextStyle(color: theme.primaryTextTheme.headline1.color, fontSize: fontSize),
         );
         break;
       default:
