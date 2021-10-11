@@ -5,7 +5,7 @@ author: flytreeleft <flytreeleft@crazydan.org>
 homepage: https://github.com/flytreeleft/flutter_calculator
 
 environment:
-  sdk: ">=2.5.0 <3.0.0"
+  sdk: ">=2.7.0 <3.0.0"
 
 dependencies:
   flutter:
